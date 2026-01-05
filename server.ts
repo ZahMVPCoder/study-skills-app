@@ -147,7 +147,6 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
     res.status(500).json({ error: 'Login failed' });
   }
 });
-});
 
 // Get current user
 app.get('/api/auth/me', verifyToken, (req: Request, res: Response) => {
