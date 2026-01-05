@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { GraduationCap, Mail, Lock, AlertCircle, Info, ArrowRight } from 'lucide-react';
+import { GraduationCap, Mail, AlertCircle, Info, ArrowRight } from 'lucide-react';
 
 interface LoginProps {
   onSwitchToSignup: () => void;
