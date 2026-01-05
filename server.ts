@@ -48,19 +48,21 @@ const verifyToken = (req: Request, res: Response, next: Function): void => {
 // ===== AUTH ENDPOINTS =====
 
 // Signup
-app.post('/api/auth/signup', async (req: Request, res: Response) => {
+app.post('/api/auth/signup', async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password, name, role } = req.body;
 
     // Validate input
     if (!email || !password || !name || !role) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      res.status(400).json({ error: 'Missing required fields' });
+      return;
     }
 
     // Check if user already exists
     const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length > 0) {
-      return res.status(400).json({ error: 'User already exists' });
+      res.status(400).json({ error: 'User already exists' });
+      return;
     }
 
     // Hash password
@@ -97,20 +99,22 @@ app.post('/api/auth/signup', async (req: Request, res: Response) => {
 });
 
 // Login
-app.post('/api/auth/login', async (req: Request, res: Response) => {
+app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
     // Validate input
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' });
+      res.status(400).json({ error: 'Email and password required' });
+      return;
     }
 
     // Find user
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
 
     if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      res.status(401).json({ error: 'Invalid email or password' });
+      return;
     }
 
     const user = result.rows[0];
@@ -118,7 +122,8 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     // Verify password
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      res.status(401).json({ error: 'Invalid email or password' });
+      return;
     }
 
     // Generate JWT token
@@ -141,6 +146,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
   }
+});
 });
 
 // Get current user
