@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { GraduationCap, Lock, User as UserIcon, AlertCircle, ArrowRight } from 'lucide-react';
+import { GraduationCap, User as UserIcon, AlertCircle, ArrowRight } from 'lucide-react';
 import type { UserRole } from '@/types/auth';
 
 interface SignupProps {
