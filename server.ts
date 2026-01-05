@@ -30,17 +30,18 @@ app.use(cors());
 app.use(express.json());
 
 // Verify JWT token
-const verifyToken = (req: Request, res: Response, next: Function) => {
+const verifyToken = (req: Request, res: Response, next: Function): void => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
+    res.status(401).json({ error: 'No token provided' });
+    return;
   }
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     (req as any).user = decoded;
     next();
   } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
+    res.status(401).json({ error: 'Invalid token' });
   }
 };
 
