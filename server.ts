@@ -154,7 +154,7 @@ app.get('/api/auth/me', verifyToken, (req: Request, res: Response) => {
 });
 
 // Health check
-app.get('/api/health', (req: Request, res: Response) => {
+app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'Backend is running' });
 });
 
