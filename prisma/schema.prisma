@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  student
+  coach
+  instructor
+}
+
+enum Priority {
+  low
+  medium
+  high
+}
+
+model User {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email      String     @unique
+  password   String
+  name       String
+  role       UserRole
+  created_at DateTime   @default(now())
+
+  study_sessions StudySession[]
+  assignments    Assignment[]
+
+  @@map("users")
+}
+
+model StudySession {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String   @db.Uuid
+  subject     String
+  day         String
+  start_time  String
+  duration    Int
+  notes       String?
+  created_at  DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("study_sessions")
+}
+
+model Assignment {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String
+  subject     String?
+  due_date    DateTime @db.Date
+  priority    Priority?
+  completed   Boolean  @default(false)
+  user_id     String   @db.Uuid
+  notes       String?
+  created_at  DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("assignments")
+}
+
+model RubricEvidence {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_name    String
+  student_email   String
+  subject         String?
+  rubric_category String
+  score           Int
+  max_score       Int
+  description     String
+  notes           String?
+  evaluated_by    String
+  date_submitted  DateTime @db.Date
+  created_at      DateTime @default(now())
+
+  @@map("rubric_evidence")
+}

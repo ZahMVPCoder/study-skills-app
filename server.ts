@@ -1,29 +1,22 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import { Pool } from 'pg';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-
-dotenv.config({ path: '.env.local' });
+import 'dotenv/config';
+import * as bcrypt from 'bcryptjs';
+import * as jwt from 'jsonwebtoken';
+import { prisma } from './prisma/client.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_change_this';
 
-// Database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-
 // Test database connection
-pool.connect((err: any) => {
-  if (err) {
+prisma.$connect()
+  .then(() => {
+    console.log('✅ Connected to database via Prisma');
+  })
+  .catch((err: any) => {
     console.error('❌ Database connection failed:', err);
-  } else {
-    console.log('✅ Connected to Neon database');
-  }
-});
+  });
 
 // Middleware
 app.use(cors());
@@ -59,8 +52,11 @@ app.post('/api/auth/signup', async (req: Request, res: Response): Promise<void> 
     }
 
     // Check if user already exists
-    const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (existingUser.rows.length > 0) {
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
       res.status(400).json({ error: 'User already exists' });
       return;
     }
@@ -69,12 +65,14 @@ app.post('/api/auth/signup', async (req: Request, res: Response): Promise<void> 
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Create user in database
-    const result = await pool.query(
-      'INSERT INTO users (email, password_hash, name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, name, role',
-      [email, passwordHash, name, role]
-    );
-
-    const user = result.rows[0];
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: passwordHash,
+        name,
+        role: role as any,
+      },
+    });
 
     // Generate JWT token
     const token = jwt.sign(
@@ -110,17 +108,17 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
     }
 
     // Find user
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
-    if (result.rows.length === 0) {
+    if (!user) {
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
 
-    const user = result.rows[0];
-
     // Verify password
-    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+    const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
       res.status(401).json({ error: 'Invalid email or password' });
       return;
@@ -156,6 +154,13 @@ app.get('/api/auth/me', verifyToken, (req: Request, res: Response) => {
 // Health check
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'Backend is running' });
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Shutting down gracefully...');
+  await prisma.$disconnect();
+  process.exit(0);
 });
 
 app.listen(PORT, () => {
