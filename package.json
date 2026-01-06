@@ -81,6 +81,7 @@
             "server": "tsx watch server.ts",
             "server:prod": "tsx server.ts",
             "init:db": "tsx init-db.ts",
+            "postinstall": "prisma generate",
             "prisma:migrate": "prisma migrate dev",
             "prisma:generate": "prisma generate",
             "prisma:studio": "prisma studio",
